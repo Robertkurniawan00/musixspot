@@ -12,7 +12,6 @@ import '../services/bluetooth_audio_service.dart';
 import '../theme/spotify_theme.dart';
 import '../widgets/lyrics_sheet.dart';
 import '../widgets/artist_about_card.dart';
-import '../widgets/explore_artist_section.dart';
 import '../widgets/song_credits_widget.dart';
 import '../services/native_bridge.dart';
 import '../services/artist_navigation_service.dart';
@@ -669,10 +668,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
 
                 // ── TENTANG ARTIS (Screenshots 2 & 4) ──
                 ArtistAboutCard(song: song),
-                const SizedBox(height: 24),
-
-                // ── JELAJAHI [NAMA ARTIS] (Screenshots 2 & 4) ──
-                ExploreArtistSection(song: song),
                 const SizedBox(height: 24),
 
                 // ── KREDIT (Screenshots 2 & 4) ──

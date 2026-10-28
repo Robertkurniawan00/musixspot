@@ -224,6 +224,10 @@ class SongStreamResolver {
     if (lowerTitle.contains('speed of summer') || lowerTitle.contains('여름의 속도') ||
         (lowerArtist.contains('winter') && lowerTitle.contains('summer'))) {
       videoId = 'YTeFLKMnwjg';
+    } else if (lowerTitle.contains('recharge me') ||
+        (lowerArtist.contains('wendy') && lowerTitle.contains('recharge'))) {
+      // Wendy - Recharge Me (Take Charge of My Heart OST Official Topic)
+      videoId = 'MAIWvlrymlE';
     } else if (song.id.startsWith('yt_')) {
       videoId = song.id.substring(3);
     } else if (song.audioUrl.contains('youtube.com/watch?v=') ||

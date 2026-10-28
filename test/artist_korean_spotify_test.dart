@@ -26,11 +26,13 @@ void main() {
       expect(titles.any((t) => t.contains('when this rain stops')), isTrue);
       expect(titles.any((t) => t.contains('wish you hell')), isTrue);
       expect(titles.any((t) => t.contains('written in the stars')), isTrue);
+      expect(titles.any((t) => t.contains('recharge me')), isTrue);
 
-      expect(wendy.albums.length, greaterThanOrEqualTo(3));
+      expect(wendy.albums.length, greaterThanOrEqualTo(4));
       final albTitles = wendy.albums.map((a) => a.title.toLowerCase()).toList();
       expect(albTitles.any((t) => t.contains('wish you hell')), isTrue);
       expect(albTitles.any((t) => t.contains('like water')), isTrue);
+      expect(albTitles.any((t) => t.contains('recharge')), isTrue);
     });
 
     test('Hyun Bin has authentic Spotify top tracks (That Man, Can\'t Have You, Inst.)', () {

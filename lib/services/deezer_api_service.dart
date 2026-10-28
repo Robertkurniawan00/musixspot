@@ -70,7 +70,60 @@ class DeezerApiService {
 
   /// Get artist top tracks
   static Future<List<Song>> getArtistTopTracks(String artistName, {int limit = 20}) async {
-    return searchTracks('artist:"$artistName"', limit: limit);
+    final clean = TitleNormalizer.cleanArtist(artistName).trim();
+    if (clean.isEmpty) return [];
+
+    try {
+      final dzArtist = await searchArtist(clean);
+      if (dzArtist != null && dzArtist.topTracks.isNotEmpty) {
+        return dzArtist.topTracks.take(limit).toList();
+      }
+    } catch (e) {
+      debugPrint('DeezerApiService.getArtistTopTracks searchArtist error: $e');
+    }
+
+    // Secondary fallback: Direct track search
+    try {
+      final tracks = await searchTracks(clean, limit: limit);
+      if (tracks.isNotEmpty) return tracks;
+    } catch (_) {}
+
+    // Tertiary fallback: iTunes API
+    try {
+      final url = Uri.parse('https://itunes.apple.com/search?term=${Uri.encodeComponent(clean)}&entity=song&limit=$limit');
+      final resp = await http.get(url).timeout(const Duration(seconds: 4));
+      if (resp.statusCode == 200) {
+        final data = json.decode(resp.body);
+        final results = (data['results'] as List?) ?? [];
+        final List<Song> itunesSongs = [];
+        for (final item in results) {
+          final tName = (item['trackName'] ?? '').toString();
+          final aName = (item['artistName'] ?? clean).toString();
+          final albName = (item['collectionName'] ?? '').toString();
+          final rawArt = (item['artworkUrl100'] ?? '').toString();
+          final art = rawArt.replaceAll('100x100bb', '600x600bb');
+          final trackId = (item['trackId'] ?? '').toString();
+          final durMillis = (item['trackTimeMillis'] as int?) ?? 210000;
+          if (tName.isNotEmpty) {
+            itunesSongs.add(
+              Song(
+                id: 'itunes_$trackId',
+                title: TitleNormalizer.cleanTitle(tName),
+                artist: TitleNormalizer.cleanArtist(aName),
+                album: albName,
+                albumArtUrl: art.isNotEmpty ? art : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&q=80',
+                audioUrl: 'youtube:$aName $tName',
+                duration: Duration(milliseconds: durMillis),
+                lyrics: null,
+              ),
+            );
+          }
+        }
+        if (itunesSongs.isNotEmpty) return itunesSongs;
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   /// Search multiple artists by name from Deezer's 100M+ catalog
