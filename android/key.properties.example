@@ -1,0 +1,8 @@
+# Template konfigurasi signing release Android
+# Salin file ini menjadi 'android/key.properties' dan sesuaikan nilainya.
+# JANGAN simpan file 'key.properties' ke repository publik (sudah masuk .gitignore).
+
+storePassword=password_keystore_anda
+keyPassword=password_key_alias_anda
+keyAlias=musixspot
+storeFile=../musixspot_release.jks
