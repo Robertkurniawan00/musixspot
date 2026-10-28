@@ -1059,6 +1059,24 @@ class MusicPlayerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Manually re-generates and updates fresh tracks for Release Radar
+  Future<Playlist?> refreshReleaseRadar() async {
+    final idx = _playlists.indexWhere((p) => p.id == 'pl_release_radar' || p.isReleaseRadar);
+    if (idx == -1) return null;
+
+    final freshTracks = MusicApiService.getReleaseRadarTracks(refresh: true);
+    final subtitle = MusicApiService.getReleaseRadarSubtitle(refreshed: true);
+    final updatedPlaylist = _playlists[idx].copyWith(
+      songs: freshTracks,
+      subtitle: subtitle,
+      coverUrl: freshTracks.isNotEmpty ? freshTracks.first.albumArtUrl : _playlists[idx].coverUrl,
+    );
+
+    _playlists[idx] = updatedPlaylist;
+    notifyListeners();
+    return updatedPlaylist;
+  }
+
   // --- Local Data Persistence (SharedPreferences) ---
   Future<void> _savePersistentData() async {
     try {

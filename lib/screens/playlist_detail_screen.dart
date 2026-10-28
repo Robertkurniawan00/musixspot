@@ -23,6 +23,48 @@ class PlaylistDetailScreen extends StatefulWidget {
 class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
   late final ScrollController _scrollController;
   bool _isCollapsed = false;
+  late Playlist _currentPlaylist = widget.playlist;
+  bool _isRefreshingRadar = false;
+
+  Future<void> _handleRefreshRadar() async {
+    if (_isRefreshingRadar) return;
+    setState(() => _isRefreshingRadar = true);
+
+    try {
+      final updated = await context.read<MusicPlayerProvider>().refreshReleaseRadar();
+      if (mounted) {
+        setState(() {
+          _isRefreshingRadar = false;
+          if (updated != null) {
+            _currentPlaylist = updated;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: SpotifyTheme.spotifyGreen, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Release Radar berhasil diperbarui dengan 30 lagu rilisan terbaru!',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Color(0xFF282828),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isRefreshingRadar = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -48,7 +90,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MusicPlayerProvider>();
-    final playlist = widget.playlist;
+    final playlist = _currentPlaylist;
     final isCurrentPlaylistPlaying = provider.contextTitle == playlist.title && provider.isPlaying;
 
     return Scaffold(
@@ -188,6 +230,45 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                               ),
                             ],
                           ),
+                          if (playlist.isReleaseRadar) ...[
+                            const SizedBox(height: 10),
+                            InkWell(
+                              onTap: _isRefreshingRadar ? null : _handleRefreshRadar,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: SpotifyTheme.spotifyGreen.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: SpotifyTheme.spotifyGreen.withValues(alpha: 0.4)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _isRefreshingRadar
+                                        ? const SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 1.8,
+                                              color: SpotifyTheme.spotifyGreen,
+                                            ),
+                                          )
+                                        : const Icon(Icons.sync_rounded, size: 14, color: SpotifyTheme.spotifyGreen),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _isRefreshingRadar ? 'Memperbarui...' : 'Perbarui Rilisan Sekarang',
+                                      style: const TextStyle(
+                                        color: SpotifyTheme.spotifyGreen,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -233,6 +314,24 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                           },
                         );
                       }),
+
+                      // Manual Refresh for Release Radar
+                      if (playlist.isReleaseRadar)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Perbarui Rilisan Sekarang',
+                          icon: _isRefreshingRadar
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: SpotifyTheme.spotifyGreen,
+                                  ),
+                                )
+                              : const Icon(Icons.sync_rounded, color: SpotifyTheme.spotifyGreen, size: 24),
+                          onPressed: _isRefreshingRadar ? null : _handleRefreshRadar,
+                        ),
 
                       // Download Playlist (Real offline downloading)
                       Builder(builder: (ctx) {
@@ -312,6 +411,16 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                                       );
                                     },
                                   ),
+                                  if (playlist.isReleaseRadar)
+                                    ListTile(
+                                      leading: const Icon(Icons.sync_rounded, color: SpotifyTheme.spotifyGreen),
+                                      title: const Text('Perbarui Release Radar', style: TextStyle(color: Colors.white)),
+                                      subtitle: const Text('Segarkan daftar 30 lagu rilis terbaru', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                      onTap: () {
+                                        Navigator.pop(bCtx);
+                                        _handleRefreshRadar();
+                                      },
+                                    ),
                                   ListTile(
                                     leading: const Icon(Icons.shuffle, color: Colors.white),
                                     title: const Text('Putar Acak Playlist Ini', style: TextStyle(color: Colors.white)),

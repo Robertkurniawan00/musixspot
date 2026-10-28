@@ -58,6 +58,33 @@ class Playlist {
     return result;
   }
 
+
+  Playlist copyWith({
+    String? id,
+    String? title,
+    String? subtitle,
+    String? coverUrl,
+    List<Song>? songs,
+    bool? isPinned,
+    bool? isDailyMix,
+    int? dailyMixNumber,
+    bool? isReleaseRadar,
+    bool? isDiscoverWeekly,
+  }) {
+    return Playlist(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      coverUrl: coverUrl ?? this.coverUrl,
+      songs: songs ?? this.songs,
+      isPinned: isPinned ?? this.isPinned,
+      isDailyMix: isDailyMix ?? this.isDailyMix,
+      dailyMixNumber: dailyMixNumber ?? this.dailyMixNumber,
+      isReleaseRadar: isReleaseRadar ?? this.isReleaseRadar,
+      isDiscoverWeekly: isDiscoverWeekly ?? this.isDiscoverWeekly,
+    );
+  }
+
   /// Whether the coverUrl is a Daily Mix collage ("collage:url1|url2|url3|url4")
   bool get isCollageCover => coverUrl.startsWith('collage:');
 

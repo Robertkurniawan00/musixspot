@@ -42,6 +42,14 @@ void main() {
       expect(releaseRadar.subtitle, contains('Jumat'));
       expect(releaseRadar.subtitle, contains('30 lagu baru'));
     });
+
+    test('Release Radar manual refresh generates 30 fresh tracks with refreshed subtitle', () {
+      final refreshed = MusicApiService.getReleaseRadarTracks(refresh: true);
+      expect(refreshed.length, 30);
+      final sub = MusicApiService.getReleaseRadarSubtitle(refreshed: true);
+      expect(sub, contains('30 lagu baru'));
+      expect(sub, contains('Diperbarui'));
+    });
   });
 
   group('Verified Artist Profiles & Album Artwork', () {

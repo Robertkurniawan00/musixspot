@@ -4681,11 +4681,15 @@ class MusicApiService {
   // ─────────────────────────────────────────────────────────────────────────
   // DYNAMIC RELEASE RADAR FRIDAY UPDATE HELPER
   // ─────────────────────────────────────────────────────────────────────────
-  static String getReleaseRadarSubtitle() {
+  static String getReleaseRadarSubtitle({bool refreshed = false}) {
     final now = DateTime.now();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    if (refreshed) {
+      final dateStr = '${now.day} ${months[now.month - 1]}';
+      return 'Diperbarui baru saja • $dateStr • 30 lagu baru';
+    }
     final daysSinceFriday = (now.weekday - DateTime.friday + 7) % 7;
     final lastFriday = now.subtract(Duration(days: daysSinceFriday));
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     final dateStr = '${lastFriday.day} ${months[lastFriday.month - 1]}';
     return 'Diperbarui setiap Jumat • $dateStr • 30 lagu baru';
   }
@@ -4877,7 +4881,7 @@ class MusicApiService {
   }
 
   /// Generates 30 fresh tracks for Release Radar personalized by listened artists & genres
-  static List<Song> getReleaseRadarTracks() {
+  static List<Song> getReleaseRadarTracks({bool refresh = false}) {
     final result = <Song>[];
     final seen = <String>{};
 
@@ -4890,7 +4894,10 @@ class MusicApiService {
 
     final topArtistNames = UserBehaviorService.getTopArtists(limit: 8).map((a) => a.toLowerCase()).toSet();
     final targetArtists = <String>{...topArtistNames};
-    final allArtists = getComprehensiveArtists();
+    final allArtists = List<Artist>.from(getComprehensiveArtists());
+    if (refresh) {
+      allArtists.shuffle();
+    }
     final preferredGenres = allArtists
         .where((a) => targetArtists.contains(a.name.toLowerCase()))
         .expand((a) => a.genres)
@@ -4900,7 +4907,9 @@ class MusicApiService {
     // 1. First priority: New releases / top tracks from artists the user actually listens to / follows
     for (final a in allArtists) {
       if (targetArtists.contains(a.name.toLowerCase())) {
-        for (final t in a.topTracks.take(2)) {
+        final tracks = List<Song>.from(a.topTracks);
+        if (refresh) tracks.shuffle();
+        for (final t in tracks.take(2)) {
           addSong(t);
         }
       }
@@ -4911,7 +4920,9 @@ class MusicApiService {
       for (final a in allArtists) {
         final matchesGenre = a.genres.any((g) => preferredGenres.contains(g.toLowerCase()));
         if (matchesGenre && a.topTracks.isNotEmpty) {
-          addSong(a.topTracks.first);
+          final tracks = List<Song>.from(a.topTracks);
+          if (refresh) tracks.shuffle();
+          addSong(tracks.first);
         }
       }
     }
@@ -4919,17 +4930,23 @@ class MusicApiService {
     // 3. Third priority: Fresh catalog tracks from remaining comprehensive artists
     for (final a in allArtists) {
       if (a.topTracks.isNotEmpty) {
-        addSong(a.topTracks.first);
+        final tracks = List<Song>.from(a.topTracks);
+        if (refresh) tracks.shuffle();
+        addSong(tracks.first);
       }
       if (result.length >= 30) break;
     }
 
     // Fallback fills
-    for (final s in getFeaturedTracks()) {
+    final featured = List<Song>.from(getFeaturedTracks());
+    if (refresh) featured.shuffle();
+    for (final s in featured) {
       addSong(s);
       if (result.length >= 30) break;
     }
-    for (final s in getIndieTracks()) {
+    final indie = List<Song>.from(getIndieTracks());
+    if (refresh) indie.shuffle();
+    for (final s in indie) {
       addSong(s);
       if (result.length >= 30) break;
     }
